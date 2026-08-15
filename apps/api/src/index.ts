@@ -1,24 +1,20 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
+import { logger, httpLogger } from "@repo/logger";
+import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
 
 const PORT = process.env.PORT!;
 
+app.use(httpLogger)
 app.use(express.json());
 app.use(cors());
 
-app.get('/health', (req: Request, res: Response) => {
-  console.log("Incoming request from IP :- ", req.ip);
-
-  return res.status(200).json({
-    success: true,
-    message: "OK",
-  });
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Server started at PORT :- ${PORT}`);
+  logger.info({ port: PORT }, "server started");
 });
