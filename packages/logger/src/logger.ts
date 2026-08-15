@@ -1,5 +1,5 @@
 import pino from "pino";
-import pinoHttp from "pino-http";
+import pinoHttp, { Options } from "pino-http";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -12,12 +12,34 @@ export const logger = pino({
       options: {
         colorize: true,
         translateTime: "SYS:standard",
-        ignore: "pid,hostname"
-      }
-    }
-  })
+        ignore: "pid,hostname",
+      },
+    },
+  }),
 });
 
-export const httpLogger = pinoHttp({
-  logger
-});
+const httpLoggerOptions: Options = {
+  logger,
+
+  customLogLevel: (_req, res, err) => {
+    if (err || res.statusCode >= 500) {
+      return "error";
+    }
+
+    if (res.statusCode >= 400) {
+      return "warn";
+    }
+
+    return "info";
+  },
+
+  customSuccessMessage: (req, res) => {
+    return `${req.method} ${req.url} ${res.statusCode}`;
+  },
+
+  customErrorMessage: (req, res, err) => {
+    return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`;
+  },
+};
+
+export const httpLogger = pinoHttp(httpLoggerOptions);
