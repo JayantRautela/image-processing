@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum State {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  images    Image[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sessions  Session[]
+}
+
+model Image {
+  id              String    @id @default(uuid())
+  originalName    String
+  fileKey         String
+  state           State     @default(UPLOADING)
+  processingError String?
+  size            BigInt
+  width           Int?
+  height          Int?
+  thumbnailKey    String?
+  mimeType        String
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([userId, createdAt])
+  @@index([userId, state])
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  refreshTokenHash String
+  expiresAt        DateTime
+  revoked          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
