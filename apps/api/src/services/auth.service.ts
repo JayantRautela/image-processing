@@ -23,10 +23,10 @@ export const requestOtp = async (email: string) => {
       {
         otp: otp,
         email: email,
-        userId: user.id
+        userId: user.id,
       },
-      "OTP"
-    )
+      "OTP",
+    );
   }
 
   await apiRedis.set(`otp:user:${user.id}`, otpHash, "EX", 300);
@@ -47,4 +47,36 @@ export const requestOtp = async (email: string) => {
       removeOnFail: 500,
     },
   );
+};
+
+export const checkOtp = async (
+  email: string,
+  otp: string,
+): Promise<boolean> => {
+  const user = await prisma.user.findUnique({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    throw new Error("Invalid Credentials");
+  }
+
+  const otpHash = await hashString(otp);
+  const storedOtpHash = await apiRedis.get(`otp:user:${user.id}`);
+
+  if (!storedOtpHash) {
+    return false;
+  }
+
+  if (storedOtpHash !== otpHash) {
+    return false;
+  }
+
+  await apiRedis.del(`otp:user:${user.id}`);
+
+  // creating access and refresh token
+
+  return true;
 };

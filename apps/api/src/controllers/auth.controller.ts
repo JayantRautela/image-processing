@@ -1,7 +1,7 @@
 import { logger } from "@repo/logger";
 import type { Request, Response } from "express";
-import { enterUserSchema } from "@repo/zod";
-import { requestOtp } from "../services/auth.service";
+import { enterUserOtpSchema, enterUserSchema } from "@repo/zod";
+import { checkOtp, requestOtp } from "../services/auth.service";
 
 export const auth = async (req: Request, res: Response) => {
   try {
@@ -31,7 +31,53 @@ export const auth = async (req: Request, res: Response) => {
       "Error while entering user",
     );
 
-    res.status(500).json({
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const verifyOtp = async (req: Request, res: Response) => {
+  try {
+    const body = req.body;
+
+    const validate = await enterUserOtpSchema.safeParseAsync(body);
+
+    if (!validate.success) {
+      return res.status(400).json({
+        message: "Validation Error",
+        errors: validate.error.flatten(),
+      });
+    }
+
+    const isOtpCorrect = await checkOtp(validate.data.email, validate.data.otp);
+
+    if (isOtpCorrect === false) {
+      return res.status(401).json({
+        message: "Unauthorized"
+      });
+    }
+
+    return res.status(200).json({
+      message: "User verified",
+    });
+  } catch (error) {
+    logger.error(
+      {
+        error,
+        method: req.method,
+        url: req.originalUrl,
+      },
+      "Error in OTP verification",
+    );
+
+    if (error instanceof Error && error.message === "Invalid Credentials") {
+      return res.status(400).json({
+        message: "Invalid Credentials",
+      });
+    }
+
+    return res.status(500).json({
       message: "Internal server error",
     });
   }
