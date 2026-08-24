@@ -24,6 +24,7 @@
     "@repo/aws": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/logger": "workspace:*",
+    "@repo/zod": "workspace:*",
     "@repo/queue": "workspace:*",
     "@repo/redis": "workspace:*",
     "@repo/utils": "workspace:*",

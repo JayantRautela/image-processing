@@ -38,6 +38,9 @@ importers:
       '@repo/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@repo/zod':
+        specifier: workspace:*
+        version: link:../../packages/zod
       cors:
         specifier: ^2.8.6
         version: 2.8.6
