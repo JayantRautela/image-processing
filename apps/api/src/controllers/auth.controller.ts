@@ -50,16 +50,25 @@ export const verifyOtp = async (req: Request, res: Response) => {
       });
     }
 
-    const isOtpCorrect = await checkOtp(validate.data.email, validate.data.otp);
+    const tokens = await checkOtp(validate.data.email, validate.data.otp);
 
-    if (isOtpCorrect === false) {
+    if (tokens === false) {
       return res.status(401).json({
-        message: "Unauthorized"
+        message: "Unauthorized",
       });
     }
 
+    res.cookie("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: "/auth",
+    });
+
     return res.status(200).json({
       message: "User verified",
+      accessToken: tokens.accessToken,
     });
   } catch (error) {
     logger.error(

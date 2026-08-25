@@ -1,8 +1,18 @@
 import { prisma } from "@repo/db";
 import { logger } from "@repo/logger";
 import { emailQueue } from "@repo/queue";
-import { generateOTP, hashString } from "@repo/utils";
+import {
+  generateOTP,
+  getAccessToken,
+  getRefreshToken,
+  hashString,
+} from "@repo/utils";
 import { apiRedis } from "@repo/redis";
+
+type AuthTokens = {
+  refreshToken: string;
+  accessToken: string;
+};
 
 export const requestOtp = async (email: string) => {
   const user = await prisma.user.upsert({
@@ -52,7 +62,7 @@ export const requestOtp = async (email: string) => {
 export const checkOtp = async (
   email: string,
   otp: string,
-): Promise<boolean> => {
+): Promise<AuthTokens | false> => {
   const user = await prisma.user.findUnique({
     where: {
       email: email,
@@ -66,17 +76,24 @@ export const checkOtp = async (
   const otpHash = await hashString(otp);
   const storedOtpHash = await apiRedis.get(`otp:user:${user.id}`);
 
-  if (!storedOtpHash) {
-    return false;
-  }
-
-  if (storedOtpHash !== otpHash) {
+  if (!storedOtpHash || storedOtpHash !== otpHash) {
     return false;
   }
 
   await apiRedis.del(`otp:user:${user.id}`);
 
-  // creating access and refresh token
+  const refreshToken = getRefreshToken();
+  const refreshTOkenHash = await hashString(refreshToken);
 
-  return true;
+  const session = await prisma.session.create({
+    data: {
+      userId: user.id,
+      refreshTokenHash: refreshTOkenHash,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  const accessToken = await getAccessToken(session.id, user.id);
+
+  return { refreshToken: refreshToken, accessToken: accessToken };
 };
