@@ -5,6 +5,7 @@ import cors from "cors";
 import { logger, httpLogger } from "@repo/logger";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
+import AuthRoute from "./routes/auth.route";
 
 const app = express();
 
@@ -19,6 +20,8 @@ app.use(cors({
 }));
 
 app.use(errorHandler);
+
+app.use('/auth', AuthRoute);
 
 app.listen(PORT, () => {
   logger.info({ port: PORT }, "server started");
