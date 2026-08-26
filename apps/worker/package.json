@@ -2,7 +2,7 @@
   "name": "worker",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -17,8 +17,11 @@
     "typescript": "latest"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
+    "@repo/email": "workspace:*",
     "@repo/logger": "workspace:*",
-    "@repo/queue": "workspace:*"
+    "@repo/redis": "workspace:*",
+    "bullmq": "^6.1.2"
   },
   "keywords": [],
   "author": "",
