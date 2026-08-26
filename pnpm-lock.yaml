@@ -310,6 +310,9 @@ importers:
 
   packages/utils:
     dependencies:
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../redis
       jose:
         specifier: ^6.2.10
         version: 6.2.10
