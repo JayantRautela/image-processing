@@ -1,7 +1,7 @@
-import { logger } from "@repo/logger";
 import type { Request, Response } from "express";
 import { enterUserOtpSchema, enterUserSchema } from "@repo/zod";
 import { checkOtp, requestOtp } from "../services/auth.service";
+import { logError } from "@repo/utils";
 
 export const auth = async (req: Request, res: Response) => {
   try {
@@ -22,14 +22,7 @@ export const auth = async (req: Request, res: Response) => {
       message: "Otp sent",
     });
   } catch (error) {
-    logger.error(
-      {
-        error,
-        method: req.method,
-        url: req.originalUrl,
-      },
-      "Error while entering user",
-    );
+    logError(error, req, "Error while entering user");
 
     return res.status(500).json({
       message: "Internal server error",
@@ -71,14 +64,7 @@ export const verifyOtp = async (req: Request, res: Response) => {
       accessToken: tokens.accessToken,
     });
   } catch (error) {
-    logger.error(
-      {
-        error,
-        method: req.method,
-        url: req.originalUrl,
-      },
-      "Error in OTP verification",
-    );
+    logError(error, req, "Error in OTP verification");
 
     if (error instanceof Error && error.message === "Invalid Credentials") {
       return res.status(400).json({
