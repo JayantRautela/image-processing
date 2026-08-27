@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { enterUserOtpSchema, enterUserSchema } from "@repo/zod";
 import { checkOtp, requestOtp } from "../services/auth.service";
-import { logError } from "@repo/utils";
+import { logError, rateLimit } from "@repo/utils";
 
 export const auth = async (req: Request, res: Response) => {
   try {
@@ -13,6 +13,18 @@ export const auth = async (req: Request, res: Response) => {
       return res.status(400).json({
         message: "Validation Error",
         errors: validate.error.flatten(),
+      });
+    }
+
+    const allowed = await rateLimit(
+      `rate-limit:otp-request:${validate.data.email}`,
+      5,
+      15 * 60,
+    );
+
+    if (!allowed) {
+      return res.status(429).json({
+        message: "Too many OTP requests. Try again later.",
       });
     }
 
@@ -40,6 +52,18 @@ export const verifyOtp = async (req: Request, res: Response) => {
       return res.status(400).json({
         message: "Validation Error",
         errors: validate.error.flatten(),
+      });
+    }
+
+    const allowed = await rateLimit(
+      `rate-limit:otp-verify:${validate.data.email}`,
+      5,
+      15 * 60,
+    );
+
+    if (!allowed) {
+      return res.status(429).json({
+        message: "Too many OTP attempts. Try again later.",
       });
     }
 
