@@ -1,15 +1,9 @@
 import express from "express";
-import dotenv from "dotenv";
-import path from "path";
 import cors from "cors";
 import { logger, httpLogger } from "@repo/logger";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 import AuthRoute from "./routes/auth.route";
-
-dotenv.config({
-  path: path.resolve(process.cwd(), "../../.env"),
-});
 
 const app = express();
 
