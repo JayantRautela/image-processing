@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { enterUserOtpSchema, enterUserSchema } from "@repo/zod";
+import { enterUserOtpSchema, enterUserSchema, getOtpSchema } from "@repo/zod";
 import { checkOtp, requestOtp } from "../services/auth.service";
 import { logError, rateLimit } from "@repo/utils";
 
@@ -95,6 +95,45 @@ export const verifyOtp = async (req: Request, res: Response) => {
         message: "Invalid Credentials",
       });
     }
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const getOtp = async (req: Request, res: Response) => {
+  try {
+    const body = req.body;
+
+    const validate = await getOtpSchema.safeParseAsync(body);
+
+    if (!validate.success) {
+      return res.status(400).json({
+        message: "Validation Error",
+        errors: validate.error.flatten(),
+      });
+    }
+
+    const allowed = await rateLimit(
+      `rate-limit:get-otp:${validate.data.email}`,
+      1,
+      1 * 60,
+    );
+
+    if (!allowed) {
+      return res.status(429).json({
+        message: "Please try again in 1 minute",
+      });
+    }
+
+    await requestOtp(validate.data.email);
+
+    return res.status(200).json({
+      message: "Otp sent",
+    });
+  } catch (error) {
+    logError(error, req, "Error in OTP verification");
 
     return res.status(500).json({
       message: "Internal server error",
