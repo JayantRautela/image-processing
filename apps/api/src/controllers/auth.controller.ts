@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { enterUserOtpSchema, enterUserSchema, getOtpSchema } from "@repo/zod";
-import { checkOtp, requestOtp } from "../services/auth.service";
+import { checkOtp, getToken, requestOtp } from "../services/auth.service";
 import { logError, rateLimit } from "@repo/utils";
 
 export const auth = async (req: Request, res: Response) => {
@@ -133,6 +133,42 @@ export const getOtp = async (req: Request, res: Response) => {
       message: "Otp sent",
     });
   } catch (error) {
+    logError(error, req, "Error in OTP verification");
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const refreshAccessToken = async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+    const allowed = await rateLimit(
+      `rate-limit:otp-request:${req.ip}`,
+      5,
+      15 * 60,
+    );
+
+    if (!allowed) {
+      return res.status(429).json({
+        message: "Too many OTP requests. Try again later.",
+      });
+    }
+
+    const accessToken = await getToken(refreshToken);
+
+    return res.status(200).json({
+      message: "Tokens refreshed successgully",
+      accessToken: accessToken,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Error refreshing tokens") {
+      return res.status(400).json({
+        message: "Invalid request",
+      });
+    }
+
     logError(error, req, "Error in OTP verification");
 
     return res.status(500).json({

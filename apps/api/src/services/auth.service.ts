@@ -83,12 +83,12 @@ export const checkOtp = async (
   await apiRedis.del(`otp:user:${user.id}`);
 
   const refreshToken = getRefreshToken();
-  const refreshTOkenHash = await hashString(refreshToken);
+  const refreshTokenHash = await hashString(refreshToken);
 
   const session = await prisma.session.create({
     data: {
       userId: user.id,
-      refreshTokenHash: refreshTOkenHash,
+      refreshTokenHash: refreshTokenHash,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
   });
@@ -97,3 +97,23 @@ export const checkOtp = async (
 
   return { refreshToken: refreshToken, accessToken: accessToken };
 };
+
+export const getToken = async (refreshToken: string): Promise<string> => {
+  const refreshTokenHash = await hashString(refreshToken);
+
+  const session = await prisma.session.findFirst({
+    where: {
+      refreshTokenHash: refreshTokenHash,
+      expiresAt: undefined,
+      revoked: false,
+    },
+  });
+
+  if (!session) {
+    throw new Error(" ");
+  }
+
+  const accessToken = await getAccessToken(session.id, session.userId);
+
+  return accessToken;
+}
