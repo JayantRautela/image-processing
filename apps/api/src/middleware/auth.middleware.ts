@@ -27,7 +27,7 @@ export const authMiddleware = async (
     }
 
     const { payload } = await jwtVerify(token, secret);
-    console.log(payload);
+    console.log(payload); // testing
 
     if (
       payload.type !== "access" ||
