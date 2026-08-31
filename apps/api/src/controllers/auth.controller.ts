@@ -1,6 +1,11 @@
 import type { Request, Response } from "express";
 import { enterUserOtpSchema, enterUserSchema, getOtpSchema } from "@repo/zod";
-import { checkOtp, getToken, requestOtp } from "../services/auth.service";
+import {
+  checkOtp,
+  getToken,
+  logoutUser,
+  requestOtp,
+} from "../services/auth.service";
 import { logError, rateLimit } from "@repo/utils";
 
 export const auth = async (req: Request, res: Response) => {
@@ -170,6 +175,51 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
     }
 
     logError(error, req, "Error in OTP verification");
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    const sessionId = req.sessionId as string;
+    const refreshToken = req.cookies.refreshToken;
+
+    const allowed = await rateLimit(
+      `rate-limit:logout:${userId}`,
+      10,
+      10 * 60
+    );
+
+    if (!allowed) {
+      return res.status(429).json({
+        message: "Too many OTP requests. Try again later.",
+      });
+    }
+
+    await logoutUser(userId, sessionId, refreshToken);
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      path: "/auth",
+    });
+
+    return res.status(200).json({
+      message: "User logged out",
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "No Session Found") {
+      return res.status(404).json({
+        message: "No session found",
+      });
+    }
+
+    logError(error, req, "Error while logging out");
 
     return res.status(500).json({
       message: "Internal server error",

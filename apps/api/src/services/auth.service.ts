@@ -116,4 +116,27 @@ export const getToken = async (refreshToken: string): Promise<string> => {
   const accessToken = await getAccessToken(session.id, session.userId);
 
   return accessToken;
-}
+};
+
+export const logoutUser = async (
+  userId: string,
+  sessionId: string,
+  refreshToken: string,
+) => {
+  const refreshTokenHash = await hashString(refreshToken);
+  const session = await prisma.session.update({
+    where: {
+      userId: userId,
+      id: sessionId,
+      refreshTokenHash: refreshTokenHash,
+    },
+    data: {
+      revoked: true,
+      refreshTokenHash: undefined,
+    },
+  });
+
+  if (!session) {
+    throw new Error("No Session Found");
+  }
+};
