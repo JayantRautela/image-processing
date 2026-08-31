@@ -12,3 +12,11 @@ export const enterUserOtpSchema = z.object({
 export const getOtpSchema = z.object({
   email: z.email(),
 });
+
+export const initiateUploadSchema = z.object({
+  originalName: z.string(),
+  mimeType: z.string(),
+  size: z.bigint().positive(),
+  width: z.int().positive(),
+  height: z.int().positive(),
+});
