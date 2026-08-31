@@ -157,7 +157,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
     if (!allowed) {
       return res.status(429).json({
-        message: "Too many OTP requests. Try again later.",
+        message: "Too many requests. Try again later.",
       });
     }
 
@@ -196,7 +196,7 @@ export const logout = async (req: Request, res: Response) => {
 
     if (!allowed) {
       return res.status(429).json({
-        message: "Too many OTP requests. Try again later.",
+        message: "Too many requests. Try again later.",
       });
     }
 
