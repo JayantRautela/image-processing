@@ -4,6 +4,7 @@ import { logger, httpLogger } from "@repo/logger";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 import AuthRoute from "./routes/auth.route";
+import ImageRoute from "./routes/image.route";
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(
 app.use(errorHandler);
 
 app.use("/auth", AuthRoute);
+app.use("/upload", ImageRoute);
 
 app.listen(PORT, () => {
   logger.info({ port: PORT }, "server started");
