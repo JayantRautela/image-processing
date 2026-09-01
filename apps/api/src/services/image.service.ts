@@ -1,7 +1,10 @@
-import { generatePresignedUploadUrl } from "@repo/aws";
+import { generatePresignedUploadUrl, objectExists } from "@repo/aws";
 import { prisma } from "@repo/db";
 import { logger } from "@repo/logger";
+import { imageQueue } from "@repo/queue";
 import { v4 as uuid } from "uuid";
+
+const BUCKET = process.env.AWS_S3_BUCKET_NAME!;
 
 interface ImageProps {
   originalName: string;
@@ -27,14 +30,9 @@ export const uploadService = async (data: ImageProps, userId: string) => {
     },
   });
 
-  if (!process.env.AWS_S3_BUCKET_NAME) {
-    logger.error("No AWS Bucket Name provided");
-    throw new Error("AWS_S3_BUCKET_NAME is not configured");
-  }
-
   try {
     const presignedUrl = await generatePresignedUploadUrl({
-      bucket: process.env.AWS_S3_BUCKET_NAME,
+      bucket: BUCKET,
       key,
       contentType: data.mimeType,
     });
@@ -52,4 +50,59 @@ export const uploadService = async (data: ImageProps, userId: string) => {
 
     throw error;
   }
+};
+
+export const completeUploadService = async (
+  userId: string,
+  imageId: string,
+) => {
+  const image = await prisma.image.findFirst({
+    where: {
+      id: imageId,
+      userId,
+    },
+  });
+
+  if (!image) {
+    throw new Error("Image not found");
+  }
+
+  const imageExists = await objectExists({
+    bucket: BUCKET,
+    key: image.fileKey,
+  });
+
+  if (!imageExists) {
+    throw new Error("Image not found");
+  }
+
+  if (image.state !== "UPLOADING") {
+    throw new Error("Image upload has already been completed");
+  }
+
+  await prisma.image.update({
+    where: {
+      id: imageId,
+    },
+    data: {
+      state: "PROCESSING",
+    },
+  });
+
+  await imageQueue.add(
+    "process-image",
+    {
+      imageId: image.id,
+    },
+    {
+      jobId: `process-image:${image.id}`,
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+      removeOnComplete: 100,
+      removeOnFail: 500,
+    },
+  );
 };
