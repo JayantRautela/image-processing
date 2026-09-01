@@ -9,7 +9,7 @@ type ProcessImage = {
   imageId: string;
 };
 
-const BUCKET = process.env.AWS_S3_BUCKET_NAME!
+const BUCKET = process.env.AWS_S3_BUCKET_NAME!;
 
 export const imageWorker = new Worker<ProcessImage>(
   "image-processing",
@@ -77,3 +77,24 @@ export const imageWorker = new Worker<ProcessImage>(
     connection: workerRedis,
   },
 );
+
+imageWorker.on("failed", async (job, error) => {
+  if (!job) return;
+
+  const maxAttempts = job.opts.attempts ?? 1;
+
+  const errorMessage =
+    error instanceof Error ? error.message : "Unknown processing error";
+
+  if (job.attemptsMade === maxAttempts) {
+    await prisma.image.update({
+      where: {
+        id: job.data.imageId,
+      },
+      data: {
+        state: "FAILED",
+        processingError: errorMessage,
+      },
+    });
+  }
+});
