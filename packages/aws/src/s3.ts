@@ -103,13 +103,13 @@ export const getObject = async ({
   return imageBuffer;
 };
 
-export const putObject = async ({ bucket, key, image }: Props) => {
+export const putObject = async ({ bucket, key, image, contentType }: Props) => {
   await s3Client.send(
     new PutObjectCommand({
       Bucket: bucket,
       Key: key,
       Body: image,
-      ContentType: "image/webp",
+      ContentType: contentType,
     }),
   );
 };
