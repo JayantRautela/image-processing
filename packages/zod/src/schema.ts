@@ -15,7 +15,7 @@ export const getOtpSchema = z.object({
 
 export const initiateUploadSchema = z.object({
   originalName: z.string(),
-  mimeType: z.string(),
+  mimeType: z.enum(["image/jpeg", "image/png", "image/webp", "image/jpg"]),
   size: z.bigint().positive(),
   width: z.int().positive(),
   height: z.int().positive(),
