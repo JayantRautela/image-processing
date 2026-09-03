@@ -24,6 +24,7 @@ app.use(errorHandler);
 
 app.use("/auth", AuthRoute);
 app.use("/upload", ImageRoute);
+app.use("/images", ImageRoute);
 
 app.listen(PORT, () => {
   logger.info({ port: PORT }, "server started");
