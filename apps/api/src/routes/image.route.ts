@@ -5,7 +5,7 @@ import { completeUpload, getAllImages, initiateUpload } from "../controllers/ima
 const router: Router = Router();
 
 router.post('/', authMiddleware, initiateUpload);
-router.post('/complete', authMiddleware, completeUpload);
+router.post('/complete/:imageId', authMiddleware, completeUpload);
 router.get('/', authMiddleware, getAllImages);
 
 export default router;
