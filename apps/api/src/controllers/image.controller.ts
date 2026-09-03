@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import {
   completeUploadService,
   fetchAllImages,
+  getSingleImage,
   uploadService,
 } from "../services/image.service";
 
@@ -130,10 +131,36 @@ export const getAllImages = async (req: Request, res: Response) => {
       ...result,
     });
   } catch (error) {
-    logError(error, req, "Error while completing upload");
+    logError(error, req, "Error while fetching images");
 
     return res.status(500).json({
       message: "Internal Server Error",
     });
   }
 };
+
+export const getImageById = async (req: Request, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const userId = req.userId;
+    const imageId = req.params.imageId as string;
+
+    const image = await getSingleImage(userId, imageId);
+
+    return res.status(200).json({
+      message: "Image fetched successfully",
+      image: image,
+    });
+  } catch (error) {
+    logError(error, req, "Error while fetching image");
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+}

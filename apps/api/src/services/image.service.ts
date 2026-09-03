@@ -142,3 +142,15 @@ export const fetchAllImages = async (
     hasMore,
   };
 };
+
+export const getSingleImage = async (userId: string, imageId: string) => {
+  const image = await prisma.image.findFirst({
+    where: {
+      id: imageId,
+      userId: userId,
+      state: "READY",
+    },
+  });
+
+  return image;
+};
