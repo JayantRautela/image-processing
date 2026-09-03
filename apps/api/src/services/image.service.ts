@@ -114,6 +114,7 @@ export const fetchAllImages = async (
   const images = await prisma.image.findMany({
     where: {
       userId: userId,
+      state: "READY",
     },
     take: limit + 1,
 
