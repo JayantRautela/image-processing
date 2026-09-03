@@ -1,6 +1,5 @@
 import { generatePresignedUploadUrl, objectExists } from "@repo/aws";
 import { prisma } from "@repo/db";
-import { logger } from "@repo/logger";
 import { imageQueue } from "@repo/queue";
 import { v4 as uuid } from "uuid";
 
@@ -105,4 +104,41 @@ export const completeUploadService = async (
       removeOnFail: 500,
     },
   );
+};
+
+export const fetchAllImages = async (
+  userId: string,
+  cursor?: string,
+  limit: number = 10,
+) => {
+  const images = await prisma.image.findMany({
+    where: {
+      userId: userId,
+    },
+    take: limit + 1,
+
+    cursor: cursor
+      ? {
+          id: cursor,
+        }
+      : undefined,
+
+    skip: cursor ? 1 : 0,
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  const hasMore = images.length > limit;
+
+  const data = hasMore ? images.slice(0, limit) : images;
+
+  const nextCursor = hasMore ? images[images.length - 1]!.id : null;
+
+  return {
+    images: data,
+    nextCursor,
+    hasMore,
+  };
 };

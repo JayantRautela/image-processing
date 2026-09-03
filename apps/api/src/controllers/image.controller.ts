@@ -3,6 +3,7 @@ import { initiateUploadSchema } from "@repo/zod";
 import type { Request, Response } from "express";
 import {
   completeUploadService,
+  fetchAllImages,
   uploadService,
 } from "../services/image.service";
 
@@ -100,6 +101,35 @@ export const completeUpload = async (req: Request, res: Response) => {
       });
     }
 
+    logError(error, req, "Error while completing upload");
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const getAllImages = async (req: Request, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const userId = req.userId;
+
+    const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+
+    const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : 10;
+
+    const result = await fetchAllImages(userId, cursor, limit);
+
+    return res.status(200).json({
+      message: "Images fetched successfully",
+      ...result,
+    });
+  } catch (error) {
     logError(error, req, "Error while completing upload");
 
     return res.status(500).json({
