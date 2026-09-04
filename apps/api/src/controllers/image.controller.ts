@@ -3,6 +3,7 @@ import { initiateUploadSchema } from "@repo/zod";
 import type { Request, Response } from "express";
 import {
   completeUploadService,
+  deleteImageService,
   fetchAllImages,
   getSingleImage,
   uploadService,
@@ -163,6 +164,31 @@ export const getImageById = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logError(error, req, "Error while fetching image");
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const deleteImage = async (req: Request, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const userId = req.userId;
+    const imageId = req.params.imageId as string;
+
+    await deleteImageService(userId, imageId);
+
+    return res.status(200).json({
+      message: "Image deleted successfully",
+    });
+  } catch (error) {
+    logError(error, req, "Error while deleting image");
 
     return res.status(500).json({
       message: "Internal Server Error",

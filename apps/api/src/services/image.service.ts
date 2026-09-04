@@ -155,3 +155,18 @@ export const getSingleImage = async (userId: string, imageId: string) => {
 
   return image;
 };
+
+export const deleteImageService = async (userId: string, imageId: string) => {
+  const image = await prisma.image.update({
+    where: {
+      userId: userId,
+      id: imageId,
+      deletedAt: null,
+      state: "READY",
+    },
+    data: {
+      state: "DELETED",
+      deletedAt: new Date(),
+    },
+  });
+};
