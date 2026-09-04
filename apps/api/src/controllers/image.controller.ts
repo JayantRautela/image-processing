@@ -96,7 +96,10 @@ export const completeUpload = async (req: Request, res: Response) => {
       });
     }
 
-    if (error instanceof Error && error.message === "Image upload has already been completed") {
+    if (
+      error instanceof Error &&
+      error.message === "Image upload has already been completed"
+    ) {
       return res.status(404).json({
         message: "Image already uploaded",
       });
@@ -120,9 +123,11 @@ export const getAllImages = async (req: Request, res: Response) => {
 
     const userId = req.userId;
 
-    const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+    const cursor =
+      typeof req.query.cursor === "string" ? req.query.cursor : undefined;
 
-    const limit = typeof req.query.limit === "string" ? Number(req.query.limit) : 10;
+    const limit =
+      typeof req.query.limit === "string" ? Number(req.query.limit) : 10;
 
     const result = await fetchAllImages(userId, cursor, limit);
 
@@ -163,4 +168,4 @@ export const getImageById = async (req: Request, res: Response) => {
       message: "Internal Server Error",
     });
   }
-}
+};

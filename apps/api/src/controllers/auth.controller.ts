@@ -188,11 +188,7 @@ export const logout = async (req: Request, res: Response) => {
     const sessionId = req.sessionId as string;
     const refreshToken = req.cookies.refreshToken;
 
-    const allowed = await rateLimit(
-      `rate-limit:logout:${userId}`,
-      10,
-      10 * 60
-    );
+    const allowed = await rateLimit(`rate-limit:logout:${userId}`, 10, 10 * 60);
 
     if (!allowed) {
       return res.status(429).json({

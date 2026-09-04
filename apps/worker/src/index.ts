@@ -26,10 +26,7 @@ emailWorker.on("failed", (job, error) => {
 });
 
 emailWorker.on("error", (error) => {
-  logger.error(
-    { error },
-    "Email worker error",
-  );
+  logger.error({ error }, "Email worker error");
 });
 
 imageWorker.on("completed", (job) => {
@@ -54,10 +51,7 @@ imageWorker.on("failed", (job, error) => {
 });
 
 imageWorker.on("error", (error) => {
-  logger.error(
-    { error },
-    "Image worker error",
-  );
+  logger.error({ error }, "Image worker error");
 });
 
 process.on("SIGTERM", async () => {
